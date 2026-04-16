@@ -1,42 +1,38 @@
 ```
-# Python
+# Dependencies
+venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
+
+# Build artifacts
+build/
+dist/
 *.egg-info/
 
-# Testing
-.coverage
-coverage/
-htmlcov/
-.pytest_cache/
-.tox/
-
-# Distribution / packaging
-dist/
-build/
-*.egg
-*.tar.gz
-*.whl
-
-# Virtual environments
-venv/
-.venv/
+# Environment files
 .env
 .env.local
 *.env.*
 
-# IDE and editor
+# Logs
+*.log
+
+# Editor/IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 *.tmp
 
-# OS
-.DS_Store
-Thumbs.db
+# Coverage reports
+.coverage
+coverage/
+htmlcov/
+
+# Python cache
+.mypy_cache/
+.pytest_cache/
 ```
