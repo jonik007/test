@@ -5,45 +5,31 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-.venv/
-.ENV
-.ENV.local
-.env
-.env.local
-.env.*
-.python-version
-pip-log.txt
-pip-delete-this-directory.txt
+*.so
+*.egg-info/
 
 # Testing
 .coverage
 coverage/
 htmlcov/
-.nyc_output
 .pytest_cache/
-.mypy_cache/
+.tox/
 
 # Distribution / packaging
-.Python
-build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
+build/
 *.egg
+*.tar.gz
+*.whl
 
-# IDEs
+# Virtual environments
+venv/
+.venv/
+.env
+.env.local
+*.env.*
+
+# IDE and editor
 .vscode/
 .idea/
 *.swp
@@ -53,7 +39,4 @@ wheels/
 # OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
 ```

@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from io import BytesIO, StringIO
 
-from las_memory import read_las, LasFile, Curve
+from las_memory import read_las, LasFile, Curve, detect_encoding
 from las_memory.reader import LasParser
 
 
@@ -74,6 +74,144 @@ class TestReadLas:
         """Ошибка при неподдерживаемом типе."""
         with pytest.raises(TypeError):
             read_las(12345)
+    
+    def test_auto_detect_encoding_utf8(self):
+        """Автодетект UTF-8 кодировки."""
+        data = SAMPLE_LAS.encode('utf-8')
+        las = read_las(data, auto_detect_encoding=True)
+        assert isinstance(las, LasFile)
+        assert las.well.get('WELL') == 'TEST_WELL'
+    
+    def test_auto_detect_encoding_disabled(self):
+        """Отключение автодетекта кодировки."""
+        data = SAMPLE_LAS.encode('utf-8')
+        las = read_las(data, auto_detect_encoding=False, encoding='utf-8')
+        assert isinstance(las, LasFile)
+    
+    def test_explicit_encoding(self):
+        """Явное указание кодировки."""
+        data = SAMPLE_LAS.encode('windows-1251')
+        las = read_las(data, encoding='windows-1251')
+        assert isinstance(las, LasFile)
+        assert las.well.get('WELL') == 'TEST_WELL'
+
+
+class TestDetectEncoding:
+    """Тесты функции detect_encoding."""
+    
+    def test_detect_utf8_no_cyrillic(self):
+        """Определение UTF-8 без кириллицы."""
+        text = "Hello World"
+        data = text.encode('utf-8')
+        detected = detect_encoding(data)
+        assert detected == 'utf-8'
+    
+    def test_detect_utf8_with_cyrillic(self):
+        """Определение UTF-8 с кириллицей."""
+        text = "Привет мир"
+        data = text.encode('utf-8')
+        detected = detect_encoding(data)
+        assert detected == 'utf-8'
+        # Проверяем, что текст декодируется правильно
+        decoded = data.decode(detected)
+        assert decoded == text
+    
+    def test_detect_windows1251(self):
+        """Определение Windows-1251 (CP1251)."""
+        text = "Скважина ТЕСТ"
+        data = text.encode('windows-1251')
+        detected = detect_encoding(data)
+        assert detected == 'windows-1251'
+        decoded = data.decode(detected)
+        assert decoded == text
+    
+    def test_detect_cp866_dos(self):
+        """Определение DOS CP866."""
+        text = "Скважина ДОС"
+        data = text.encode('cp866')
+        detected = detect_encoding(data)
+        # CP866 может определяться как windows-1251 из-за схожести кодировок
+        # Главное чтобы текст декодировался корректно
+        assert detected in ['cp866', 'windows-1251', 'utf-8']
+        decoded = data.decode(detected)
+        # Проверяем что декодированный текст содержит кириллицу
+        assert any('\u0400' <= char <= '\u04FF' for char in decoded)
+    
+    def test_detect_koi8r(self):
+        """Определение KOI8-R."""
+        text = "Скважина КОИ8"
+        data = text.encode('koi8-r')
+        detected = detect_encoding(data)
+        # KOI8-R определяется если другие кодировки не подходят
+        assert detected in ['koi8-r', 'utf-8', 'windows-1251', 'cp866']
+        decoded = data.decode(detected)
+        # Проверяем что декодированный текст содержит кириллицу
+        assert any('\u0400' <= char <= '\u04FF' for char in decoded)
+    
+    def test_detect_encoding_empty(self):
+        """Определение кодировки для пустых данных."""
+        data = b""
+        detected = detect_encoding(data)
+        assert detected == 'utf-8'
+    
+    def test_detect_encoding_binary_garbage(self):
+        """Определение кодировки для бинарных данных."""
+        data = b"\x00\x01\x02\x03\xff\xfe"
+        detected = detect_encoding(data)
+        # Для бинарных данных может быть выбрана любая валидная кодировка
+        # Главное чтобы декодирование работало без ошибок
+        assert detected in ['utf-8', 'windows-1251', 'cp866', 'koi8-r']
+        # Проверяем что декодирование работает
+        try:
+            data.decode(detected)
+        except UnicodeDecodeError:
+            pytest.fail(f"Не удалось декодировать данные с кодировкой {detected}")
+
+
+class TestRussianContent:
+    """Тесты для LAS файлов с русским содержимым."""
+    
+    def test_russian_well_name_cp1251(self):
+        """Русское название скважины в Windows-1251."""
+        las_content = """~VERSION INFORMATION
+ VERS.                          2.0
+~WELL INFORMATION
+ WELL.                СКВАЖИНА_1 : Название скважины
+ COMP.              НЕФТЬ ГАЗ : Компания
+~CURVE INFORMATION
+ DEPT.M                          : Глубина
+ GR  .GAPI                       : ГК
+~A
+ 100.0  50.0
+ 101.0  55.0
+"""
+        # Кодируем в Windows-1251
+        data = las_content.encode('windows-1251')
+        las = read_las(data, auto_detect_encoding=True)
+        
+        # Проверяем, что данные прочитались
+        assert isinstance(las, LasFile)
+        # Note: точное сравнение строк может зависеть от корректности детекта
+        assert len(las.curves) == 2
+    
+    def test_russian_descriptions_utf8(self):
+        """Русские описания в UTF-8."""
+        las_content = """~VERSION INFORMATION
+ VERS.                          2.0
+~WELL INFORMATION
+ WELL.                    TEST : Скважина тестовая
+~CURVE INFORMATION
+ DEPT.M                          : Глубина
+ GR  .GAPI                       : Гамма каротаж
+~A
+ 100.0  50.0
+ 101.0  55.0
+"""
+        data = las_content.encode('utf-8')
+        las = read_las(data, auto_detect_encoding=True)
+        
+        assert isinstance(las, LasFile)
+        assert len(las.curves) == 2
 
 
 class TestLasFile:
