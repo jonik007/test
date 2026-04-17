@@ -3,10 +3,24 @@ import io
 import sys
 import os
 
-# Добавляем путь к библиотеке las_memory
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'las_memory'))
+# Определяем базовую директорию проекта
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Поднимаемся на уровень выше, чтобы найти соседнюю папку las_memory (так как они лежат рядом в корне репо)
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+LAS_MEMORY_PATH = os.path.join(PROJECT_ROOT, 'las_memory')
 
-from las_memory import read_las
+if os.path.exists(LAS_MEMORY_PATH):
+    sys.path.insert(0, LAS_MEMORY_PATH)
+
+try:
+    from las_memory import read_las
+except ImportError:
+    # Фоллбэк: если las_memory установлен как пакет в environment
+    try:
+        from las_memory import read_las
+    except ImportError:
+        print("Ошибка: Модуль las_memory не найден. Убедитесь, что папка las_memory находится рядом с las_viewer в корне репозитория или установлена через pip.")
+        raise
 
 app = Flask(__name__)
 
