@@ -286,27 +286,28 @@ class LasParser:
             
             # Проверяем начало секции
             if line.startswith('~'):
-                section_match = re.match(r'~(\w+)(?:\s+(.*))?', line)
+                section_match = re.match(r'~\s*(\w+)(?:\s+(.*))?', line, re.IGNORECASE)
                 if section_match:
                     section_name = section_match.group(1).upper()
                     section_title = section_match.group(2) or ""
                     
-                    if section_name == 'VERSION':
+                    # Поддержка различных вариантов написания названий секций
+                    if section_name == 'VERSION' or section_name.startswith('VERSION'):
                         current_section = las.version
                         current_section.title = "~VERSION"
-                    elif section_name == 'WELL':
+                    elif section_name == 'WELL' or section_name.startswith('WELL'):
                         current_section = las.well
                         current_section.title = "~WELL"
-                    elif section_name == 'CURVE':
+                    elif section_name == 'CURVE' or section_name.startswith('CURVE'):
                         current_section = las.curve
                         current_section.title = "~CURVE"
-                    elif section_name in ('PARAM', 'PARAMETER'):  # Поддержка обоих вариантов
+                    elif section_name in ('PARAM', 'PARAMETER') or section_name.startswith('PARAM'):
                         current_section = las.param
                         current_section.title = "~PARAM"
                     elif section_name == 'OTHER':
                         current_section = None
                         las.other = ""
-                    elif section_name == 'A':  # Секция данных
+                    elif section_name == 'A' or section_name == 'ASCII':  # Секция данных
                         current_section = None
                         in_data = True
                         i += 1
