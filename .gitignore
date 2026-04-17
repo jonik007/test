@@ -6,17 +6,68 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.py.class
+*.py.obj
+*.py.out
+*.py.exe
+*.py.dll
+*.py.so
+*.py.a
+*.py.o
+
+# Virtual environments
+venv/
+.venv/
+env/
+.ENV/
 
 # Build artifacts
 build/
 dist/
+*.egg
+*.egg-info/
+*.whl
+*.pyc
+*.pyo
+*.py.class
+*.py.obj
+*.py.out
+*.py.exe
+*.py.dll
+*.py.so
+*.py.a
+*.py.o
+
+# Logs
+*.log
+
+# Environment variables
 *.egg-info/
 
 # Environment files
 .env
 .env.local
-*.env.*
+.env.*
+!.env.example
 
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 # Logs
 *.log
 
