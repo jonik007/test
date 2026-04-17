@@ -1,11 +1,12 @@
-from flask import Flask, request, jsonify, render_template
-import io
-import sys
 import os
+import sys
 
-# Добавляем путь к библиотеке las_memory
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'las_memory'))
+# Добавляем родительскую директорию в путь, чтобы найти las_memory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 
+from flask import Flask, request, jsonify, render_template
 from las_memory import read_las
 
 app = Flask(__name__)
@@ -97,4 +98,4 @@ def upload_file():
         return jsonify({'error': f'Ошибка при обработке файла: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
