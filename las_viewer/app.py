@@ -2,29 +2,18 @@ import os
 import sys
 from flask import Flask, request, jsonify, render_template
 
-# Определяем директорию текущего скрипта (las_viewer)
+# --- Настройка путей для импорта las_memory ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Нам нужно подняться на уровень выше, чтобы попасть в папку 'test',
-# где лежат соседние папки 'las_viewer' и 'las_memory'.
-# Структура: C:\...\test\las_viewer\app.py
-# Целевой путь для sys.path: C:\...\test
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
-
-# Проверяем, существует ли там папка las_memory
 LAS_MEMORY_DIR = os.path.join(PROJECT_ROOT, 'las_memory')
 
 if os.path.exists(LAS_MEMORY_DIR):
-    # Добавляем РОДИТЕЛЬСКУЮ папку (test) в sys.path
-    # Тогда Python сможет найти пакет 'las_memory' внутри неё
     if PROJECT_ROOT not in sys.path:
         sys.path.insert(0, PROJECT_ROOT)
     print(f"SUCCESS: Added to path: {PROJECT_ROOT}")
     print(f"SUCCESS: Found las_memory at: {LAS_MEMORY_DIR}")
 else:
     print(f"ERROR: las_memory folder not found at {LAS_MEMORY_DIR}")
-    print(f"Current BASE_DIR: {BASE_DIR}")
-    print(f"Calculated PROJECT_ROOT: {PROJECT_ROOT}")
     sys.exit(1)
 
 try:
@@ -32,7 +21,6 @@ try:
     print("SUCCESS: Module las_memory imported successfully.")
 except ImportError as e:
     print(f"CRITICAL ERROR: Failed to import read_las: {e}")
-    print(f"sys.path contains: {sys.path[:3]}...") # Показать первые 3 пути для отладки
     sys.exit(1)
 
 app = Flask(__name__)
@@ -55,73 +43,92 @@ def upload_file():
         return jsonify({'error': 'Пожалуйста, загрузите файл с расширением .las'}), 400
     
     try:
-        # Читаем файл в память
+        # Читаем файл в память (байты)
         file_content = file.read()
         
-        # Определяем кодировку автоматически (для русской поддержки)
-        las_data = read_las(file_content, autodetect_encoding=True)
+        # Вызываем парсер (автодетект кодировки теперь внутри функции)
+        result = read_las(file_content)
         
-        # Извлекаем мета информацию
+        # result - это словарь: {'header': HeaderObj, 'curve_names': [...], 'df': DataFrame, ...}
+        header_obj = result['header']
+        df = result.get('df')
+        curve_names = result.get('curve_names', [])
+
+        # --- Извлечение метаинформации ---
+        # Доступ к данным через словари внутри объекта header (well, version)
+        well_data = getattr(header_obj, 'well', {})
+        version_data = getattr(header_obj, 'version', {})
+        
+        # Helper функция для безопасного получения значения
+        def get_well_value(key, default='Не указано'):
+            if key in well_data:
+                val = well_data[key].get('value', '')
+                return val if val else default
+            return default
+
         metadata = {
-            'well_name': las_data.well.get('WELL', 'Не указано'),
-            'field': las_data.well.get('FLD', 'Не указано'),
-            'location': las_data.well.get('LOC', 'Не указано'),
-            'province': las_data.well.get('PROV', 'Не указано'),
-            'county': las_data.well.get('CNTY', 'Не указано'),
-            'state': las_data.well.get('ST', 'Не указано'),
-            'country': las_data.well.get('CTRY', 'Не указано'),
-            'service_company': las_data.well.get('SRVC', 'Не указано'),
-            'date': las_data.well.get('DATE', 'Не указано'),
-            'api': las_data.well.get('API', 'Не указано'),
-            'run_number': las_data.well.get('RUN', 'Не указано'),
-            'version': f"{las_data.version.VERS}.{las_data.version.WRAP}"
+            'well_name': get_well_value('WELL'),
+            'field': get_well_value('FLD'),
+            'location': get_well_value('LOC'),
+            'province': get_well_value('PROV'),
+            'county': get_well_value('CNTY'),
+            'state': get_well_value('ST'),
+            'country': get_well_value('CTRY'),
+            'service_company': get_well_value('SRVC'),
+            'date': get_well_value('DATE'),
+            'api': get_well_value('API'),
+            'run_number': get_well_value('RUN'),
+            'version': f"{version_data.get('VERS', {}).get('value', '?')} / {version_data.get('WRAP', {}).get('value', '?')}"
         }
         
-        # Извлекаем данные кривых
-        curves_data = []
-        for curve in las_data.curves:
-            curve_info = {
-                'mnemonic': curve.mnemonic,
-                'unit': curve.unit,
-                'descr': curve.descr,
-                'data': curve.data.tolist() if hasattr(curve.data, 'tolist') else list(curve.data)
-            }
-            curves_data.append(curve_info)
-        
-        # Формируем таблицу данных (первые 100 строк для производительности)
+        # --- Формирование таблицы данных ---
+        table_headers = curve_names
         table_data = []
-        if len(las_data.curves) > 0:
-            # Получаем длину данных (минимальная длина среди всех кривых)
-            min_length = min(len(curve.data) for curve in las_data.curves if len(curve.data) > 0)
-            max_rows = min(100, min_length)  # Ограничиваем 100 строками
-            
-            headers = [curve.mnemonic for curve in las_data.curves]
-            
-            for i in range(max_rows):
-                row = {}
-                for j, curve in enumerate(las_data.curves):
-                    if len(curve.data) > i:
-                        value = curve.data[i]
-                        # Обрабатываем специальные значения
-                        if hasattr(value, 'item'):
-                            value = value.item()
-                        row[headers[j]] = value
-                    else:
-                        row[headers[j]] = None
-                table_data.append(row)
+        total_rows = 0
         
+        if df is not None and not df.empty:
+            total_rows = len(df)
+            # Берем первые 100 строк для отображения
+            display_df = df.head(100)
+            
+            # Преобразуем DataFrame в список словарей для JSON
+            # replace NaN на None для корректной сериализации в JSON
+            table_data = display_df.where(pd.notnull(display_df), None).to_dict(orient='records')
+        else:
+            # Если pandas не подключился или данных нет
+            pass
+
+        # --- Информация о кривых (для справки) ---
+        curves_info = []
+        if hasattr(header_obj, 'curves'):
+            for curve in header_obj.curves:
+                curves_info.append({
+                    'mnemonic': curve.mnemonic,
+                    'unit': curve.unit,
+                    'descr': curve.description
+                })
+
         return jsonify({
             'success': True,
             'metadata': metadata,
-            'curves': curves_data,
-            'table_headers': [curve.mnemonic for curve in las_data.curves],
+            'curves_info': curves_info,
+            'table_headers': table_headers,
             'table_data': table_data,
-            'total_rows': min_length if len(las_data.curves) > 0 else 0,
+            'total_rows': total_rows,
             'displayed_rows': len(table_data)
         })
         
     except Exception as e:
+        import traceback
+        traceback.print_exc() # Вывод полной ошибки в консоль сервера
         return jsonify({'error': f'Ошибка при обработке файла: {str(e)}'}), 500
 
 if __name__ == '__main__':
+    # Импорт pandas здесь, чтобы ошибка импорта не ломала старт приложения, 
+    # но была видна при обработке
+    try:
+        import pandas as pd
+    except ImportError:
+        print("WARNING: pandas not installed. Table data will be limited.")
+        
     app.run(debug=True, host='0.0.0.0', port=5001)

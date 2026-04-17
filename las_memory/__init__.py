@@ -1,16 +1,6 @@
-"""
-las_memory - Библиотека для чтения LAS файлов из памяти.
+# las_memory/__init__.py
 
-Аналог lasio, но работает с данными в памяти (bytes, str, BytesIO, StringIO)
-без необходимости сохранения файла на диск. Поддерживает автодетект кодировки
-для русских символов (UTF-8, Windows-1251, CP866/DOS, KOI8-R).
-"""
+from .reader import read_las
 
-__version__ = "0.2.0"
-__author__ = "Assistant"
-
-from .reader import read_las, LasFile, detect_encoding
-from .curves import Curve
-from .header import Header, SectionItem
-
-__all__ = ["read_las", "LasFile", "Curve", "Header", "SectionItem", "detect_encoding"]
+__version__ = '1.0.0'
+__all__ = ['read_las']
