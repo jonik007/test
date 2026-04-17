@@ -1,5 +1,7 @@
 ```
 # Dependencies
+venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -40,6 +42,9 @@ dist/
 *.log
 
 # Environment variables
+*.egg-info/
+
+# Environment files
 .env
 .env.local
 .env.*
@@ -63,4 +68,22 @@ htmlcov/
 .Trashes
 ehthumbs.db
 Thumbs.db
+# Logs
+*.log
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Coverage reports
+.coverage
+coverage/
+htmlcov/
+
+# Python cache
+.mypy_cache/
+.pytest_cache/
 ```

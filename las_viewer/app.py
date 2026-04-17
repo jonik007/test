@@ -21,6 +21,10 @@ except ImportError:
     except ImportError:
         print("Ошибка: Модуль las_memory не найден. Убедитесь, что папка las_memory находится рядом с las_viewer в корне репозитория или установлена через pip.")
         raise
+# Добавляем путь к библиотеке las_memory
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'las_memory'))
+
+from las_memory import read_las
 
 app = Flask(__name__)
 
