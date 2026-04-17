@@ -4,7 +4,7 @@ import io
 import numpy as np
 
 # Импортируем нашу библиотеку
-from las_memory import LASFile, read, read_bytes, read_string, read_buffer
+from las_memory import read_las
 
 
 def test_read_from_bytes():
