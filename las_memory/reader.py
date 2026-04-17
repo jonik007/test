@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 
 def detect_encoding(raw_data: bytes) -> str:
     """Пытается определить кодировку для русских символов."""
-    # Порядок важен: сначала пробуем UTF-8, потом Windows (самая частая для LAS в РФ), потом DOS
-    encodings = ['utf-8', 'cp1251', 'cp866', 'latin-1']
+    # Порядок важен: сначала пробуем DOS (cp866), потом UTF-8, потом Windows (cp1251), потом latin-1
+    encodings = ['cp866', 'utf-8', 'cp1251', 'latin-1']
     
     for enc in encodings:
         try:
