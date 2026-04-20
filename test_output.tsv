@@ -1,0 +1,5 @@
+LAS	скважина	кривые	STRT	STOP	STEP	МNEM	единицы измерения	комментарий	путь к файлу
+1	11	DEPT	370.00	2251.00	0.20	DEPT	M		\workspace\las_viewer\BKZ5.las
+1	11	N11M05A	370.00	2251.00	0.20	N11M05A	Omm	потенциал-зонд N11.0M0.5A,Ом.м	\workspace\las_viewer\BKZ5.las
+1	11	A2M05N	370.00	2251.00	0.20	A2M05N	Omm	Подошвенный градиент-зонд A2.0M0.5N,Омм	\workspace\las_viewer\BKZ5.las
+1	11	PS	370.00	2251.00	0.20	PS	mV	Потенциал самопроизвольной поляризации,мВ	\workspace\las_viewer\BKZ5.las
