@@ -1,18 +1,19 @@
 ```
 # Python
-.venv
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.Python
+env/
+venv/
+.venv/
+.ENV
+.ENV.*
+.python-version
 
 # Logs
 *.log
-
-# Environment
-.env
-.env.local
-*.env.*
 
 # Coverage
 .coverage
@@ -24,12 +25,15 @@ htmlcov/
 *.swp
 *.swo
 
-# OS generated
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Build artifacts
-dist/
-build/
-*.egg-info/
+# Environment files
+.env
+.env.local
+.env.*
+
+# MyPy
+.mypy_cache/
 ```
