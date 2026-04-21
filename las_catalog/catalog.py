@@ -138,6 +138,18 @@ def generate_catalog(directory_path: str, output_file: str) -> str:
     """
     Сканирует директорию и генерирует TSV файл с каталогом LAS файлов.
     
+    Формат выходного файла (TSV, UTF-8, разделитель - табуляция):
+    - LAS (флаг наличия кривой: 1 или 0)
+    - скважина (значение тега WELL)
+    - кривые (сочетание МNEM кривой)
+    - STRT
+    - STOP
+    - STEP
+    - МNEM кривой
+    - единицы измерения кривой
+    - комментарий кривой
+    - путь к файлу LAS (с обратными слэшами)
+    
     Args:
         directory_path: Путь к корневой директории для сканирования
         output_file: Путь к выходному TSV файлу
@@ -160,7 +172,7 @@ def generate_catalog(directory_path: str, output_file: str) -> str:
             row = [
                 '1' if record.get('mnemonic') else '0',  # Флаг наличия кривой
                 str(record.get('well') or ''),
-                str(record.get('mnemonic') or ''),
+                str(record.get('mnemonic') or ''),  # кривые - сочетание МNEM
                 str(record.get('strt') or ''),
                 str(record.get('stop') or ''),
                 str(record.get('step') or ''),
